@@ -76,6 +76,7 @@ async def gen(Client , message):
                                     print(r.status_code)
                                 msg = await msg.edit(f"<b>Combo Length: {le}\nChecking.. {i}/{le}| Hits: {hits}|Fails: {fails}</b>")
                     await message.reply_text("Checking Completed")
+                    f.close()
                     #edit message
                 else:
                     await message.reply_text("Please reply to a .txt file")
