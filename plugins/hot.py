@@ -91,6 +91,7 @@ async def gen(Client , message):
 
 
                     await message.reply_text("Done")
+                    f.close()
                 else:
                     await message.reply_text("Please reply to a .txt file")
 
